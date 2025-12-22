@@ -25,6 +25,33 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Prerequisites
+
+- Node.js (v20+)
+- Docker (or Colima on macOS)
+- PostgreSQL Client (optional, for GUI access)
+
+## Database Setup
+
+This project uses PostgreSQL via Docker.
+
+1. **Start the Database**
+   ```bash
+   # If using Colima (macOS)
+   colima start
+   
+   # Start Postgres container
+   docker-compose up -d
+   ```
+
+2. **Run Migrations**
+   ```bash
+   # Apply Prisma migrations
+   npx prisma migrate dev
+   ```
+
+   *Note: If you encounter Prisma version errors, ensure you are using Node v20 (`nvm use 20`).*
+
 ## Project setup
 
 ```bash
