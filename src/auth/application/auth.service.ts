@@ -12,7 +12,10 @@ export class AuthService {
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.prisma.user.findUnique({ where: { email } });
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            include: { roles: true }
+        });
         if (user && (await bcrypt.compare(pass, user.password))) {
             const { password, ...result } = user;
             return result;
@@ -21,7 +24,11 @@ export class AuthService {
     }
 
     async login(user: any) {
-        const payload = { email: user.email, sub: user.id, roles: user.roles };
+        const payload = {
+            email: user.email,
+            sub: user.id,
+            roles: user.roles ? user.roles.map(r => r.name) : []
+        };
         return {
             access_token: this.jwtService.sign(payload),
         };
@@ -29,13 +36,24 @@ export class AuthService {
 
     async register(data: { email: string; password: string; name?: string }) {
         const hashedPassword = await bcrypt.hash(data.password, 10);
+
+        // Find default role
+        const userRole = await this.prisma.role.findUnique({
+            where: { name: 'USER' },
+        });
+
         return this.prisma.user.create({
             data: {
                 email: data.email,
                 password: hashedPassword,
                 name: data.name,
-                // Default role is USER, handled by default in DB/Prisma Schema
+                roles: userRole ? {
+                    connect: { id: userRole.id }
+                } : undefined,
             },
+            include: {
+                roles: true,
+            }
         });
     }
 }

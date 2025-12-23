@@ -1,14 +1,16 @@
-#!/bin/bash
-echo "1. Registering User..."
+TIMESTAMP=$(date +%s)
+EMAIL="test_${TIMESTAMP}@example.com"
+
+echo "1. Registering User ($EMAIL)..."
 curl -s -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com", "password":"password123", "name":"Test User"}'
+  -d "{\"email\":\"$EMAIL\", \"password\":\"password123\", \"name\":\"Test User\"}"
 echo -e "\n"
 
 echo "2. Logging In..."
 RESPONSE=$(curl -s -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com", "password":"password123"}')
+  -d "{\"email\":\"$EMAIL\", \"password\":\"password123\"}")
 echo "Response: $RESPONSE"
 
 TOKEN=$(echo $RESPONSE | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
