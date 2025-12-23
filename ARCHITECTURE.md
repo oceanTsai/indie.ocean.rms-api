@@ -102,19 +102,19 @@ graph TD
     PermissionsGuard[RolesGuard]
     
     subgraph "Authentication (Login)"
-        User -->|1. 帳號密碼| API
-        API -->|2. validateUser()| AuthService
-        AuthService -->|3. Check DB & Hash| DB[(PostgreSQL)]
-        AuthService -->|4. Generate JWT| API
-        API -->|5. Return Token| User
+        User -->|"1. 帳號密碼"| API
+        API -->|"2. validateUser()"| AuthService
+        AuthService -->|"3. Check DB & Hash"| DB[(PostgreSQL)]
+        AuthService -->|"4. Generate JWT"| API
+        API -->|"5. Return Token"| User
     end
 
     subgraph "Authorization (Request)"
-        User -->|6. Request + Bearer Token| API
-        API -->|7. Validate Token| JwtStrategy
-        JwtStrategy -->|8. User Profile| API
-        API -->|9. Check Role| PermissionsGuard
-        PermissionsGuard -->|10. Pass/Deny| API
+        User -->|"6. Request + Bearer Token"| API
+        API -->|"7. Validate Token"| JwtStrategy
+        JwtStrategy -->|"8. User Profile"| API
+        API -->|"9. Check Role"| PermissionsGuard
+        PermissionsGuard -->|"10. Pass/Deny"| API
     end
 ```
 
