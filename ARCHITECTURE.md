@@ -87,3 +87,87 @@ src/
 - 使用 **schema-first** 開發模式。
 - 定義檔位於 `prisma/schema.prisma`。
 - 透過 `npx prisma migrate dev` 進行資料庫版本控制與遷移。
+
+---
+
+## 6. 系統流程圖 (System Diagrams)
+
+### 6.1 身份驗證與授權全景圖 (Auth & Authorization Overview)
+```mermaid
+graph TD
+    User((使用者))
+    API[Controller / API Endpoints]
+    AuthService[AuthService]
+    JwtStrategy[Passport JwtStrategy]
+    PermissionsGuard[RolesGuard]
+    
+    subgraph "Authentication (Login)"
+        User -->|1. 帳號密碼| API
+        API -->|2. validateUser()| AuthService
+        AuthService -->|3. Check DB & Hash| DB[(PostgreSQL)]
+        AuthService -->|4. Generate JWT| API
+        API -->|5. Return Token| User
+    end
+
+    subgraph "Authorization (Request)"
+        User -->|6. Request + Bearer Token| API
+        API -->|7. Validate Token| JwtStrategy
+        JwtStrategy -->|8. User Profile| API
+        API -->|9. Check Role| PermissionsGuard
+        PermissionsGuard -->|10. Pass/Deny| API
+    end
+```
+
+### 6.2 使用者登入時序圖 (User Login Sequence)
+```mermaid
+sequenceDiagram
+    participant U as User (Client)
+    participant C as AuthController
+    participant S as AuthService
+    participant D as Prisma(DB)
+    
+    U->>C: POST /auth/login {email, password}
+    C->>S: validateUser(email, password)
+    S->>D: findUnique({ where: { email } })
+    D-->>S: User Entity (with hashed password)
+    
+    Note over S: bcrypt.compare(password, hash)
+    
+    alt Password Valid
+        S->>S: login(user) -> sign(jwt)
+        S-->>C: { access_token }
+        C-->>U: 200 OK { access_token }
+    else Password Invalid
+        S-->>C: null
+        C-->>U: 401 Unauthorized
+    end
+```
+
+### 6.3 授權請求時序圖 (Authorization Request Sequence)
+```mermaid
+sequenceDiagram
+    participant U as User (Client)
+    participant G as JwtAuthGuard
+    participant P as JwtStrategy
+    participant R as RolesGuard
+    participant C as UsersController
+    
+    U->>G: GET /users/admin (Header: Bearer Token)
+    G->>P: Passport Validate(Token)
+    
+    alt Token Invalid
+        P-->>G: Error / Invalid
+        G-->>U: 401 Unauthorized
+    else Token Valid
+        P-->>G: User Profile (Payload)
+        G->>R: Request with User
+        Note over R: Check @Roles() vs User.roles
+        
+        alt Role Matches
+            R->>C: Handle Request
+            C-->>U: 200 OK (Data)
+        else Role Mismatch
+            R-->>U: 403 Forbidden
+        end
+    end
+```
